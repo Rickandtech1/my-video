@@ -6,7 +6,7 @@ export function loadKey(serviceName: string): string {
   try {
     raw = execFileSync(
       "security",
-      ["find-generic-password", "-a", process.env["USER"] ?? "", "-s", serviceName, "-w"],
+      ["find-generic-password", "-s", serviceName, "-w"],
       { encoding: "utf8" }
     );
   } catch {
@@ -22,6 +22,9 @@ export interface Config {
   anthropicApiKey: string;
   gmailAppPassword: string;
   gmailUser: string;
+  fbPageAccessToken: string;
+  fbPageId: string;
+  igUserId: string;
 }
 
 export function loadConfig(): Config {
@@ -30,5 +33,8 @@ export function loadConfig(): Config {
     anthropicApiKey: loadKey("ANTHROPIC_API_KEY"),
     gmailAppPassword: loadKey("GMAIL_APP_PASSWORD"),
     gmailUser: loadKey("GMAIL_USER"),
+    fbPageAccessToken: loadKey("FB_PAGE_ACCESS_TOKEN"),
+    fbPageId: loadKey("FB_PAGE_ID"),
+    igUserId: loadKey("IG_USER_ID"),
   };
 }
