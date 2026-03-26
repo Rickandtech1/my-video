@@ -1,28 +1,24 @@
 // src/social/poster.ts
-import { ComposioToolSet } from "composio-core";
-import FormData from "form-data";
-import fetch from "node-fetch";
-import { QueueEntry, Platform } from "./queue";
+// Posts an image + caption to Instagram and/or Facebook.
+// Instagram: Composio two-step (create container → publish)
+// Facebook:  Direct Graph API (Composio lacks pages_manage_posts)
 
-interface PosterConfig {
-  composioApiKey: string;
-  fbPageAccessToken?: string;  // loaded from Keychain as FB_PAGE_ACCESS_TOKEN
-  fbPageId?: string;           // loaded from Keychain as FB_PAGE_ID
-}
+import { ComposioToolSet } from "composio-core";
+import { Config } from "./config";
 
 export interface PostResult {
-  platform: Platform;
+  platform: string;
   success: boolean;
+  postId?: string;
   error?: string;
 }
 
-// Instagram: two-step via Composio (create container → publish)
 async function postToInstagram(
   toolset: ComposioToolSet,
   igUserId: string,
   imageUrl: string,
   caption: string
-): Promise<void> {
+): Promise<string> {
   const container = await toolset.executeAction({
     action: "INSTAGRAM_CREATE_MEDIA_CONTAINER",
     params: { ig_user_id: igUserId, image_url: imageUrl, caption, content_type: "photo" },
@@ -30,65 +26,53 @@ async function postToInstagram(
   }) as { data?: { id?: string } };
 
   const creationId = container?.data?.id;
-  if (!creationId) throw new Error("No creation_id returned from media container");
+  if (!creationId) throw new Error("No creation_id from media container");
 
-  await toolset.executeAction({
+  const post = await toolset.executeAction({
     action: "INSTAGRAM_CREATE_POST",
     params: { ig_user_id: igUserId, creation_id: creationId },
     entityId: "default",
-  });
+  }) as { data?: { id?: string } };
+
+  return post?.data?.id ?? "unknown";
 }
 
-// Facebook: direct Graph API (Composio FB lacks pages_manage_posts)
 async function postToFacebook(
   pageId: string,
-  pageAccessToken: string,
+  pageToken: string,
   imageUrl: string,
   caption: string
-): Promise<void> {
-  const form = new FormData();
-  form.append("url", imageUrl);
-  form.append("caption", caption);
-  form.append("access_token", pageAccessToken);
-
+): Promise<string> {
+  const params = new URLSearchParams({ url: imageUrl, caption, access_token: pageToken });
   const res = await fetch(`https://graph.facebook.com/v20.0/${pageId}/photos`, {
     method: "POST",
-    body: form,
+    body: params,
   });
-  const data = await res.json() as { id?: string; error?: { message: string } };
-  if (!res.ok || data.error) {
-    throw new Error(data.error?.message ?? `HTTP ${res.status}`);
-  }
+  const data = await res.json() as { id?: string; post_id?: string; error?: { message: string } };
+  if (!res.ok || data.error) throw new Error(data.error?.message ?? `HTTP ${res.status}`);
+  return data.post_id ?? data.id ?? "unknown";
 }
 
-export async function postContent(
-  config: PosterConfig,
-  entry: QueueEntry,
-  igUserId: string
+export async function post(
+  config: Config,
+  imageUrl: string,
+  caption: string,
+  platforms: ("instagram" | "facebook")[] = ["instagram", "facebook"]
 ): Promise<PostResult[]> {
   const toolset = new ComposioToolSet({ apiKey: config.composioApiKey });
   const results: PostResult[] = [];
 
-  for (const platform of entry.platforms) {
+  for (const platform of platforms) {
     try {
+      let postId: string;
       if (platform === "instagram") {
-        await postToInstagram(toolset, igUserId, entry.filePath, entry.captionDraft);
-      } else if (platform === "facebook") {
-        if (!config.fbPageAccessToken || !config.fbPageId) {
-          throw new Error("FB_PAGE_ACCESS_TOKEN and FB_PAGE_ID required in Keychain");
-        }
-        await postToFacebook(config.fbPageId, config.fbPageAccessToken, entry.filePath, entry.captionDraft);
-      } else if (platform === "threads") {
-        await toolset.executeAction({
-          action: "THREADS_CREATE_POST",
-          params: { caption: entry.captionDraft, mediaUrl: entry.filePath },
-          entityId: "default",
-        });
+        postId = await postToInstagram(toolset, config.igUserId, imageUrl, caption);
+      } else {
+        postId = await postToFacebook(config.fbPageId, config.fbPageAccessToken, imageUrl, caption);
       }
-      results.push({ platform, success: true });
+      results.push({ platform, success: true, postId });
     } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      results.push({ platform, success: false, error });
+      results.push({ platform, success: false, error: err instanceof Error ? err.message : String(err) });
     }
   }
 

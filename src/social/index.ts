@@ -1,73 +1,49 @@
+#!/usr/bin/env ts-node
 // src/social/index.ts
-import readline from "readline";
-import cron from "node-cron";
-import { runPost, postApproved } from "./pipeline";
-import { getQueue, updateEntry, removeEntry } from "./queue";
+// Usage: npm run social -- --image <url> --caption "your caption" [--platforms instagram,facebook]
+//
+// Content creation and approval happen in the Claude Code conversation.
+// This script is called only after the user approves the image + caption in chat.
 
-const command = process.argv[2];
+import { loadConfig } from "./config";
+import { post } from "./poster";
 
-async function runApprove(): Promise<void> {
-  const pending = getQueue().filter((e) => e.status === "pending");
+function parseArgs(): { imageUrl: string; caption: string; platforms: ("instagram" | "facebook")[] } {
+  const args = process.argv.slice(2);
+  const get = (flag: string) => {
+    const i = args.indexOf(flag);
+    return i !== -1 ? args[i + 1] : undefined;
+  };
 
-  if (pending.length === 0) {
-    console.log("No posts pending approval.");
-    return;
-  }
+  const imageUrl = get("--image");
+  const caption  = get("--caption");
+  const raw      = get("--platforms");
 
-  console.log(`\n📬 ${pending.length} post(s) pending approval\n`);
+  if (!imageUrl) { console.error("Missing --image <url>"); process.exit(1); }
+  if (!caption)  { console.error("Missing --caption <text>"); process.exit(1); }
 
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
+  const platforms = raw
+    ? (raw.split(",").map(p => p.trim()) as ("instagram" | "facebook")[])
+    : ["instagram", "facebook"] as ("instagram" | "facebook")[];
 
-  for (let i = 0; i < pending.length; i++) {
-    const entry = pending[i];
-    const fileName = entry.filePath.split("/").pop();
-    console.log(`[${i + 1}/${pending.length}] ${fileName} (${entry.contentType}) — ${entry.platforms.join(", ")}`);
-    console.log(`    Caption: "${entry.captionDraft}"\n`);
-
-    const choice = await ask("    (a) Approve  (e) Edit caption  (r) Reject  > ");
-
-    if (choice.trim().toLowerCase() === "a") {
-      updateEntry(entry.id, { status: "approved" });
-      console.log("    ✓ Approved\n");
-    } else if (choice.trim().toLowerCase() === "e") {
-      const newCaption = await ask("    New caption: ");
-      updateEntry(entry.id, { status: "edited", captionDraft: newCaption.trim() });
-      console.log("    ✓ Caption updated and approved\n");
-    } else if (choice.trim().toLowerCase() === "r") {
-      removeEntry(entry.id);
-      console.log("    ✗ Rejected and removed\n");
-    } else {
-      console.log("    Skipped\n");
-    }
-  }
-
-  rl.close();
-
-  const toPost = getQueue().filter((e) => e.status === "approved" || e.status === "edited");
-  if (toPost.length > 0) {
-    console.log(`\n🚀 Posting ${toPost.length} approved item(s)...`);
-    await postApproved();
-  }
-}
-
-function runSchedule(): void {
-  console.log("⏰ Scheduler started — running post at 9:00am daily");
-  cron.schedule("0 9 * * *", async () => {
-    console.log("Running scheduled post...");
-    await runPost();
-  });
+  return { imageUrl, caption, platforms };
 }
 
 (async () => {
-  if (command === "post") {
-    await runPost();
-  } else if (command === "approve") {
-    await runApprove();
-  } else if (command === "schedule") {
-    runSchedule();
-  } else {
-    console.log("Usage: npm run post | approve | schedule");
-    process.exit(1);
+  const { imageUrl, caption, platforms } = parseArgs();
+  const config = loadConfig();
+
+  console.log(`\nPosting to: ${platforms.join(", ")}`);
+  console.log(`Image: ${imageUrl}`);
+  console.log(`Caption preview: ${caption.slice(0, 80)}...\n`);
+
+  const results = await post(config, imageUrl, caption, platforms);
+
+  for (const r of results) {
+    if (r.success) {
+      console.log(`✓ ${r.platform} — posted (${r.postId})`);
+    } else {
+      console.log(`✗ ${r.platform} — failed: ${r.error}`);
+    }
   }
 })();

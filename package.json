@@ -44,7 +44,8 @@
     "test": "jest",
     "post": "ts-node src/social/index.ts post",
     "approve": "ts-node src/social/index.ts approve",
-    "schedule": "ts-node src/social/index.ts schedule"
+    "schedule": "ts-node src/social/index.ts schedule",
+    "social": "ts-node src/social/index.ts"
   },
   "sideEffects": [
     "*.css"
