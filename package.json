@@ -6,19 +6,15 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.80.0",
     "@remotion/cli": "4.0.438",
     "@remotion/tailwind-v4": "4.0.438",
-    "composio-core": "^0.5.39",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.438",
-    "tailwindcss": "4.0.0",
-    "ts-node": "^10.9.2"
+    "tailwindcss": "4.0.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@remotion/eslint-config-flat": "4.0.438",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
@@ -26,10 +22,14 @@
     "@types/nodemailer": "^7.0.11",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
+    "composio-core": "^0.5.39",
     "eslint": "9.19.0",
     "jest": "^30.3.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4",
     "prettier": "3.8.1",
     "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },
   "scripts": {
