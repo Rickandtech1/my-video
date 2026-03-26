@@ -1,16 +1,20 @@
 // src/social/config.ts
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 
 export function loadKey(serviceName: string): string {
+  let raw: string;
   try {
-    const result = execSync(
-      `security find-generic-password -a "$USER" -s "${serviceName}" -w`,
-      { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    raw = execFileSync(
+      "security",
+      ["find-generic-password", "-a", process.env["USER"] ?? "", "-s", serviceName, "-w"],
+      { encoding: "utf8" }
     );
-    return result.toString().trim();
   } catch {
     throw new Error(`Could not load key ${serviceName} from Keychain. Run: security add-generic-password -a "$USER" -s "${serviceName}" -w YOUR_KEY`);
   }
+  const trimmed = raw.trim();
+  if (!trimmed) throw new Error(`Key ${serviceName} exists in Keychain but is empty`);
+  return trimmed;
 }
 
 export interface Config {
