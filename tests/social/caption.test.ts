@@ -23,7 +23,7 @@ describe("generateCaption", () => {
     expect(result).toBe("🎬 Amazing new video! #content #viral");
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: expect.stringContaining("claude"),
+        model: "claude-sonnet-4-6",
         messages: expect.arrayContaining([
           expect.objectContaining({ role: "user" }),
         ]),
