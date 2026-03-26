@@ -1,38 +1,77 @@
-// Main 1-minute children's video composition
-// All animations are programmatic — no copyrighted assets.
-// For audio: add royalty-free background music from YouTube Audio Library
-// or Pixabay Music (pixabay.com/music) — search "children nature calm".
+// Top 5 Claude Code Skills for Content Creators
+// 1080x1080 · 30fps · 30 seconds (900 frames)
+// Dark purple/violet brand theme
 //
-// Scene breakdown (each 15 seconds = 450 frames at 30fps):
-//   Scene 1: Sunny intro — duck walks, sun rises
-//   Scene 2: Bunny meadow — bunny hops through flowers
-//   Scene 3: Garden friends — butterflies, bees, frog
-//   Scene 4: Sunset goodbye — all animals wave goodnight
+// Scene breakdown (each 5 seconds = 150 frames):
+//   Scene 0: Intro — "Top 5 Claude Code Skills for Content Creators"
+//   Scene 1: Remotion Video Creation
+//   Scene 2: Canvas Design
+//   Scene 3: Social Media Carousels
+//   Scene 4: Brainstorming
+//   Scene 5: Subagent Development
 
 import { AbsoluteFill, Series } from "remotion";
-import { Scene1 } from "./scenes/Scene1";
-import { Scene2 } from "./scenes/Scene2";
-import { Scene3 } from "./scenes/Scene3";
-import { Scene4 } from "./scenes/Scene4";
+import { IntroScene } from "./scenes/IntroScene";
+import { SkillScene } from "./scenes/SkillScene";
 
-const SCENE_DURATION = 450; // 15 seconds × 30fps
+const SKILLS: {
+  number: number;
+  icon: string;
+  title: string;
+  lines: [string, string];
+  accentColor: string;
+}[] = [
+  {
+    number: 1,
+    icon: "🎬",
+    title: "Remotion Video",
+    lines: ["Build cinematic videos with React.", "No video editor needed."],
+    accentColor: "#00D4FF",
+  },
+  {
+    number: 2,
+    icon: "🎨",
+    title: "Canvas Design",
+    lines: ["Generate museum-quality art &", "social posts with AI."],
+    accentColor: "#F472B6",
+  },
+  {
+    number: 3,
+    icon: "📱",
+    title: "Social Carousels",
+    lines: ["Design swipe-worthy IG & LinkedIn", "carousels in seconds."],
+    accentColor: "#34D399",
+  },
+  {
+    number: 4,
+    icon: "💡",
+    title: "Brainstorming",
+    lines: ["Turn vague ideas into polished specs", "through AI dialogue."],
+    accentColor: "#FBBF24",
+  },
+  {
+    number: 5,
+    icon: "⚡",
+    title: "Subagent Dev",
+    lines: ["Delegate tasks to parallel AI agents", "for 10x build speed."],
+    accentColor: "#A855F7",
+  },
+];
 
-export const NursingVideo: React.FC = () => {
+const SCENE_DURATION = 150; // 5 seconds × 30fps
+
+export const ClaudeCodeVideo: React.FC = () => {
   return (
     <AbsoluteFill>
       <Series>
-        <Series.Sequence durationInFrames={SCENE_DURATION} premountFor={30}>
-          <Scene1 />
+        <Series.Sequence durationInFrames={SCENE_DURATION}>
+          <IntroScene />
         </Series.Sequence>
-        <Series.Sequence durationInFrames={SCENE_DURATION} premountFor={30}>
-          <Scene2 />
-        </Series.Sequence>
-        <Series.Sequence durationInFrames={SCENE_DURATION} premountFor={30}>
-          <Scene3 />
-        </Series.Sequence>
-        <Series.Sequence durationInFrames={SCENE_DURATION} premountFor={30}>
-          <Scene4 />
-        </Series.Sequence>
+        {SKILLS.map((skill) => (
+          <Series.Sequence key={skill.number} durationInFrames={SCENE_DURATION}>
+            <SkillScene {...skill} />
+          </Series.Sequence>
+        ))}
       </Series>
     </AbsoluteFill>
   );
