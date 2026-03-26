@@ -1,7 +1,12 @@
-node_modules
+node_modules/
 dist
 .DS_Store
 .env
 
 # Ignore the output video from Git but not videos you import into src/.
-out
+out/
+
+# Social automation
+queue.json
+processed.json
+social.log

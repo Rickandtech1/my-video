@@ -6,26 +6,41 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@remotion/cli": "4.0.438",
+    "@remotion/tailwind-v4": "4.0.438",
+    "composio-core": "^0.5.39",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.438",
-    "@remotion/tailwind-v4": "4.0.438",
-    "tailwindcss": "4.0.0"
+    "tailwindcss": "4.0.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.438",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.5.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
+    "jest": "^30.3.0",
     "prettier": "3.8.1",
+    "ts-jest": "^29.4.6",
     "typescript": "5.9.3"
   },
   "scripts": {
     "dev": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "test": "jest",
+    "post": "ts-node src/social/index.ts post",
+    "approve": "ts-node src/social/index.ts approve",
+    "schedule": "ts-node src/social/index.ts schedule"
   },
   "sideEffects": [
     "*.css"
